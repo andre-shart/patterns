@@ -1,0 +1,94 @@
+//@title Look Out For Me @by weekendwarrior
+let ccn = await midin('LoopBe Internal MIDI')
+
+setcpm(150/4)
+
+//await samples('github:yaxu/clean-breaks/main')
+
+const gp = gamepad()
+
+const sc = "A#: minor"
+
+const lead_gain = slider(0.174, 0, 1)
+const bass_gain = slider(0.441, 0, 1)
+const pad_gain = slider(0.0528, 0, .2)
+const drums_gain = slider(0.301, 0, 1)
+
+const drums_lpf = slider(6468, 0, 7000)
+
+LEAD: s("supersaw")
+  .gain(lead_gain)
+  .fast(8)
+  .lpf(ccn(20).range(0, 4000)) //low-pass filter
+  .lpa(ccn(21).range(0, 5)) //attack duration for the filter envelope
+  .lpe(ccn(22).range(0, 10)) //filter envelope
+  .lpq(ccn(23).range(0, 15)) //resonance
+  .note("<2@6 4 1> * 2"
+        .almostNever(trans("16 | 12 "))
+        .rib(16, 32)) //controls randomness
+  .almostNever(trans("4 | 9")) //transposes notes 10% of the time
+  .scale(sc)
+  .sometimesBy(.05, ply(2))
+  .delay(rand.range(0.5, 1.5))
+  //.room(.1).roomsize(1) //reverb
+  .fm(rand.range(.3, .7))
+  .release(.1)
+  .velocity(rand.range(.7, 1))
+  .mask(gp.tglB)
+  .pianoroll()
+
+PAD: s("saxello_vib")
+  .gain(pad_gain)
+  .fast(2)
+  .note("<2@6 4 1> * 2")
+  .scale(sc)
+  .trans(12)
+  .att(4)
+  .release(4)
+  .room(4).roomsize(4)
+  .delay(2)
+  //.fm(1)
+  //.hpf(500)
+  .mask(gp.tglY)
+  ._pianoroll()
+  
+
+BASS: s("sine").n("<2 0, -8>").scale(sc)
+  .trans(-12)
+  .gain(bass_gain)
+  .slow(4)
+  .sustain(2)
+  .release(2)
+  .attack("<.3 .2>")
+  .degradeBy(0.01)
+  .fm(1)
+  .room(1)
+  .mask(gp.tglX)
+  ._punchcard({labels: 1})
+NOISE: s("brown").room(1).delay(.2).gain(.2).lpf(2000)
+
+VOCALS: s("the_wire:1")
+  .slow(32)
+  .gain(.3)
+  .lpf(1500)
+  .hpf(1000)
+  .delay(.2).delayfb(.2)
+  //.mask(gp.LT)
+  ._spectrum()
+
+
+DRUMS: stack(
+    s("sbd").euclid("<4!15 <4 2>>", 8).slow(1)
+      .mask(gp.tglA)
+    , //sub kick
+    s("hh:3").euclid("11 | 19 | 20", 32) //hit-hat
+      .slow(2)
+      .velocity(rand.range(.2, .3))
+      .degradeBy(.01)
+      .mask(gp.tglRB)
+      .color("white"),
+    s("bd:4").beat("0, <~ 14>", 16).slow(2).velocity(rand.range(.4, .5)) //snare
+  )
+  .gain(drums_gain)
+  .lpf(drums_lpf)
+
