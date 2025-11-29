@@ -1,0 +1,84 @@
+//@title  @by weekendwarrior
+
+setcpm(180/4)
+
+await samples('github:yaxu/clean-breaks/main');
+await samples('github:yaxu/spicule/master');
+await samples('github:andre-shart/samples/main');
+
+const drums = stack(
+    s("sbd").beat("0, <1 ~ <3.5 4.5> ~>, 5", 8).gain(.4).dec(.3),
+    s("sd:1").beat("2, 6", 8).gain(.3).dec(.1),
+    s("hh:8!8").almostNever(ply(2)).gain(rand.range(0.2, .3))
+  )
+
+const breakbeat = s("think").fit()
+  .gain(.6)
+  .scrub(irand(8).div(8))
+  .struct("x [x x] x x x x [x x] x")
+  .almostNever(ply(2))
+  .dec(rand.range(0.1, 0.2))
+  .rib("<113!4 70!8>", 8)
+  .lpf(3500)
+  .hpf(900)
+
+const bass = s("supersaw")
+  .n("<2@2 1 0>")
+  .scale("F: minor")
+  .trans(-24)
+  .gain(.4)
+  .release(.5)
+  .lpf(200)
+  .lpe(2)
+  .lpa(0.1)
+
+_$: s("saw, sawtooth").dec(.1).delay(.2).jux(rev)
+  .n("<2@16 1@8 0@8>".almostNever(trans())).fast(8)
+  .degradeBy(.5)
+  .scale("F4: minor")
+  .postgain(.1)
+
+const pad = s("synths/4").note("C0").fit().gain(.3).lpf(1000)
+
+const main_vocals = s("penguins:1@2 penguins:0")
+  .note("D2")
+  .beat("0, 8, <~ 14.1>", 16)
+  .dec("10 2.3 10")
+  .pan(irand(1))
+  .slow(16)
+  .delay(.5)
+  .cutoff(perlin.range(2000, 8000))
+  .gain(.8)
+
+const ambient_vocals = s("penguins").n("<0 1 1 0>")
+  .begin("<.67 .71@2 <.67 .2>>"
+         .sometimes(mul(rand.range(.1, 1))))
+  .dec("<.7@2 .3@2>")
+  .delay(.4)
+  .pan(sine.range(0, 1).slow(3))
+  .echo(4, 1/4, .2)
+  .almostNever(ply(2))
+  .note(rand.range(36, 49))
+  .fast(2)
+  .postgain(.45)
+
+const ambient_vocals2 = s("bsvocals")
+  .n(rand.range(0, 13))
+  .lpf(2000)
+  .hpf(100)
+  .delay(.2)
+  .room(.2).roomsize(2)
+  .gain(.02)
+  .jux(rev)
+  .degradeBy(.4)
+  .rib(216, 64)
+
+$: stack(
+  bass.color("black"),
+  breakbeat.lpf(slider(3500, 0, 3500)).color("blue"),
+  drums.lpf(slider(8000, 0, 8000)),
+  main_vocals.color("purple"),
+  ambient_vocals.color("red"),
+  ambient_vocals2,
+  //pad
+).punchcard()
